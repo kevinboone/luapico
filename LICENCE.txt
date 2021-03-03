@@ -1,0 +1,9 @@
+picolua is comprised of components from many different people and
+organizations. The specific licence model should be indicated in each source
+file. All the licences have in common that the code may be freely reproduced,
+distributed, and modified and, of course, that there is no warranty of any
+kind. 
+
+This program is a proof-of-concept, and the maintainer does not make any
+representations that it is fit for any purpose.
+
