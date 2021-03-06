@@ -15,6 +15,10 @@
 struct _String;
 typedef struct _String String;
 
+typedef void (*StringTokGlobber) (String *token, List *list);
+
+extern StringTokGlobber string_tok_globber;
+
 BEGIN_DECLS
 
 String      *string_create_empty (void);

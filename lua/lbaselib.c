@@ -9,7 +9,6 @@
 
 #include "lprefix.h"
 
-
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -512,8 +511,6 @@ static const luaL_Reg base_funcs[] = {
   {"rm", luapico_rm},
   {"read", luapico_read},
   {"write", luapico_write},
-  {"cp", luapico_cp},
-  {"mkdir", luapico_mkdir},
   {"stat", luapico_stat},
   {"gpio_set_dir", luapico_gpio_set_dir},
   {"gpio_set_function", luapico_gpio_set_function},
@@ -528,9 +525,8 @@ static const luaL_Reg base_funcs[] = {
   {"adc_get", luapico_adc_get},
   {"i2c_init", luapico_i2c_init},
   {"i2c_write_read", luapico_i2c_write_read},
-  {"yrecv", luapico_yrecv},
-  {"ysend", luapico_ysend},
   {"readline", luapico_readline},
+  {"execute", luapico_execute},
   /* placeholders */
   {LUA_GNAME, NULL},
   {"_VERSION", NULL},

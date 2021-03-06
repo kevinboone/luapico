@@ -12,7 +12,7 @@
 #include <stdlib.h> 
 #include <config.h>
 #include <interface/interface.h>
-#include <errcodes.h>
+#include <shell/errcodes.h>
 #include <klib/list.h>
 #include <shell/shell.h>
 #include "storage/storage.h"
@@ -154,8 +154,9 @@ ErrCode storage_list_dir (const char *path, List *list)
   storage_df
 
 =========================================================================*/
-ErrCode storage_df (uint32_t *used, uint32_t *total)
+ErrCode storage_df (const char *path, uint32_t *used, uint32_t *total)
   {
+  (void)path; // TODO
   ErrCode ret = 0;
   int res = (int)lfs_fs_size (&lfs);
   if (res >= 0) 
@@ -315,6 +316,32 @@ ErrCode storage_read_file (const char *path,
 
 /*=========================================================================
 
+  storage_read_partial
+
+=========================================================================*/
+ErrCode storage_read_partial (const char *filename, int offset, 
+                  int count, uint8_t *buff, int *n)
+  {
+  ErrCode ret = 0;
+  lfs_file_t file;
+  int err = lfs_file_open (&lfs, &file, filename, LFS_O_RDONLY);
+  if (err == 0)
+    {
+    if (lfs_file_seek (&lfs, &file, offset, LFS_SEEK_SET) >= 0)
+      {
+      *n = lfs_file_read (&lfs, &file, buff, count);
+      if (*n < 0) 
+        ret = (ErrCode)-err;
+      }
+    else
+      return ERR_INVAL;
+    lfs_file_close (&lfs, &file);
+    }
+  return ret;
+  }
+
+/*=========================================================================
+
   storage_copy_file
 
 =========================================================================*/
@@ -398,5 +425,84 @@ ErrCode storage_mkdir (const char *path)
   else
     return (ErrCode) -err; 
   }
+
+/*=========================================================================
+
+  storage_join_path
+
+=========================================================================*/
+extern void storage_join_path (const char *path, const char *fname, 
+              char result[MAX_PATH + 1])
+  {
+  if (path[0])
+    {
+    strncpy (result, path, MAX_PATH);
+    }
+  else
+    result[0] = 0; 
+
+  if (result[0] != 0 && path[strlen(path) - 1] != '/')
+    strcat (result, "/");
+
+  strncat (result, fname, MAX_FNAME - strlen (result)); 
+  }
+
+/*=========================================================================
+
+  storage_get_basename
+
+=========================================================================*/
+void storage_get_basename (const char *path, char result[MAX_FNAME + 1])
+  {
+  char *p = strrchr (path, '/');
+  if (p)
+    {
+    strncpy (result, p + 1, MAX_FNAME);
+    }
+  else
+    {
+    strncpy (result, path, MAX_FNAME);
+    }
+  }
+
+/*=========================================================================
+
+  storage_get_dir
+
+=========================================================================*/
+void storage_get_dir (const char *path, char result[MAX_PATH + 1])
+  {
+  strncpy (result, path, MAX_PATH);
+  if (strcmp (result, "/") == 0) return; // Handle "/" case separately
+  char *p = strrchr (result, '/');
+  if (p)
+    {
+    *(p + 1) = 0;
+    }
+  else
+    {
+    *result = 0; 
+    return;
+    }
+  int l = strlen (result);
+  while (l > 1 && result[l - 1] == '/') 
+    {
+    // Strip the last /, unless that would leave the result bare
+    result[l - 1] = 0;
+    l--;
+    }
+  }
+
+/*=========================================================================
+
+  storage_rename
+
+=========================================================================*/
+ErrCode storage_rename (const char *source, const char *target)
+  {
+  return (ErrCode) -lfs_rename (&lfs, source, target);
+  }
+
+
 
 

@@ -20,12 +20,15 @@
 #include <string.h>
 #include <ctype.h>
 #include <config.h> 
-#include <errcodes.h> 
+#include <shell/errcodes.h> 
 #include <klib/string.h> 
 #include <klib/term.h> 
 #include <storage/storage.h>
 #include <interface/interface.h>
 #include <shell/shell.h>
+
+// Environment variable for turning auto-indent off 
+#define ENV_NO_INDENT "EDITOR_NO_INDENT"
 
 // Smallest memory allocation for the main buffer
 #define MINTEXTBUFFER      8192 
@@ -185,19 +188,6 @@ static void pause_after_message (void)
 static void get_console_size (ButeEnv *env) 
   {
   term_get_size (&env->lines, &env->cols);
-  }
-
-/*==========================================================================
-
-  interface_write_stringln
-
-  Helper function to tidy up writing strings with end-of-line
-
-==========================================================================*/
-void interface_write_stringln (const char *str) 
-  {
-  interface_write_string (str); 
-  interface_write_endl();
   }
 
 /*==========================================================================
@@ -1662,7 +1652,7 @@ void insert_char (BUTE *ed, char ch)
   newline 
 
 ==========================================================================*/
-void newline (BUTE *ed) 
+void newline (BUTE *ed, BOOL no_indent) 
   {
   erase_selection (ed);
   insert (ed, ed->linepos + ed->col, "\n", 1);
@@ -1670,17 +1660,21 @@ void newline (BUTE *ed)
   ed->line++;
   int p = ed->linepos;
   ed->linepos = next_line (ed, ed->linepos);
-  for (;;) 
+
+  if (!no_indent)
     {
-    char ch = get_char (ed, p++);
-    if (ch == ' ' || ch == '\t') 
+    for (;;) 
       {
-      insert (ed, ed->linepos + ed->col, &ch, 1);
-      ed->col++;
-      } 
-     else 
-      {
-      break;
+      char ch = get_char (ed, p++);
+      if (ch == ' ' || ch == '\t') 
+        {
+        insert (ed, ed->linepos + ed->col, &ch, 1);
+        ed->col++;
+        } 
+       else 
+        {
+        break;
+        }
       }
     }
 
@@ -1762,7 +1756,7 @@ void del (BUTE *ed)
   indent 
 
 ==========================================================================*/
-void indent (BUTE *ed, char *indentation) 
+void indent (BUTE *ed, char *indentation)
   {
   char *buffer, *p;
   int buflen;
@@ -2323,6 +2317,10 @@ static void help (BUTE *ed)
 static void edit (BUTE *ed) 
   {
   BOOL done = FALSE;
+  BOOL no_indent = FALSE;
+  char *env_no_indent = getenv (ENV_NO_INDENT);
+  if (env_no_indent && env_no_indent[0] == '1')
+    no_indent = TRUE;
 
   ed->refresh = TRUE; // Start with a full refresh
 
@@ -2389,7 +2387,7 @@ static void edit (BUTE *ed)
         case VK_CTRLSHIFTEND: bottom(ed, 1); break;
 
         case VK_SHIFTTAB: unindent (ed, INDENT); break;
-        case VK_ENTER: newline (ed); break;
+        case VK_ENTER: newline (ed, no_indent); break;
         case VK_BACK: backspace (ed); break;
         case VK_DEL: del (ed); break;
         case VK_INTR: intr (ed); break;

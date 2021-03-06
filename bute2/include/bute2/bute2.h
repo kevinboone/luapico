@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "../errcodes.h"
+#include <shell/errcodes.h> 
 #include <klib/defs.h> 
 
 struct _ButeEnv;

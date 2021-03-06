@@ -1,8 +1,5 @@
 Implement some idea of working directory?
 
-Shell-like functions (cp(), rm()) should take a table/array as 
-well as varargs. This would make them easier to combine together.
-
 Implement a proper serial keyboard interrupt. At present, we check at the
 start of each Lua function whether ctrl+c has been pressed. This is
 very inefficient. However, I don't know a way to get to the serial interrupt
@@ -10,10 +7,8 @@ from within the Pico C SDK. If there is a way, it's not documented.
 
 Change %f to %g when the Pico SDK handles %g properly. Grrr!
 
-Make editor indent behaviour configurable
+"lua -" crashes
 
-Implement start-up script (which probably necessitates some way
-to prevent it being executed if it tends to misbehave).
-
+Document EDITOR_NO_INDENT and other shell variables
 
 

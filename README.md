@@ -6,67 +6,81 @@ microcontroller.
 ## What is this? ##
 
 `picolua` is a *proof-of-concept* Lua programming environment for the Pi
-Pico. As well as the Lua run-time, it includes a rudimentary editor
+Pico. As well as the Lua run-time, it includes a rudimentary 
+shell that accepts Linux-like commands, a full-screen editor,
 and basic file management facilities. `picolua` is designed to be
 operated by connecting the Pico's USB to a terminal emulator.
 Lua functions have been added for controlling the Pico's GPIO
 and other peripherals.
 As a result, it is possible to enter and run simple programs that
 manipulate connected devices, without the need for any particular
-development tools.
+development tools. There is support for general digital input/output,
+analog input, PWM output, and I2C.
 
 `picolua` has some conceptual similarities with MicroPython on the
 Pico. However, `picolua` is designed to be completely self-contained,
 in that no addition tools (other than a terminal) are required to
-create, edit, and test programs.
+create, edit, and test programs. It's possible (to some extent) to
+create and test Lua code on a workstation, and then upload it to the
+Pico. However, this isn't _necessary_ -- `picolua` is capable of
+being self-contained.
 
 `picolua` maintains a filesystem in the Pico's flash ROM, that can store
 multiple files, perhaps organized into directories.
+
+There is a rudimentary command-line shell that provides a few
+Unix-like commands, for copying, viewing, and deleting files;
+and, of course, for running Lua code.
 
 Most of the standard Lua features are available, except those that
 interact with an operating system. The Lua file handling routines
 have been replaced by alternatives specific to the `picolua`
 filesystem. 
 
+## The shell ##
 
-## Building ##
+On startup, you will see the shell prompt `$`. I've used the dollar sign
+here to distinguish it from the Lua `>` prompt, and because the shell
+is a little like a Unix shell.  There is a basic line editor
+for entering shell commands; these commands are similar to Unix shell commands
+-- `cp`, `rm`, `mv`, etc.  The shell supports wilcard expansion ("globbing"),
+with the ? character matching any single character, and * matching any number
+of characters.  So it's possible, and sometimes useful, to run 
+commands like `cp *.lua /backup`. There is a full list of shell 
+commands below. 
 
-`picolua` is implemented in C, and designed to be built using 
-the documented method for the Pico C SDK. The method depends, for better
-or worse, on CMake. Setting up CMake, the SDK, and the ARM compiler
-toolchain, is documented in the Raspberry Pi documentation. I'm not a fan
-of CMake, but building for the Pico is well-nigh impossible any other way.
-If you have set up according to the documentation, you should be able
-to build like this: 
+As in Unix shells, any line that starts with a `#` is taken to be a 
+comment. This is only useful in scripts (see below).
 
-    $ mkdir build_pico
-    $ cd build_pico
-    $ cmake .. 
-    $ make
+## Running Lua on picolua ##
 
-The build process is configured to provide maximal warning logging,
-and will throw out thousands of messages, of varying degrees of scariness. 
-The result should be a file `picolua.uf2`, that can be copied to the
-Pico in bootloader mode.
+There are various ways to run Lua in `picolua`.
 
-For testing purposes, it should be possible to build a version that 
-will work on a Linux workstation, like this:
+1. Create the Lua file using the built-in editor, or upload it from
+a terminal using the YModem protocol (described below). Then run it
+using the shell command `lua {filename}`.
 
-    $ mkdir build_host
-    $ cd build_host
-    $ PICO_PLATFORM=host cmake ..
-    $ make.
+2. Run the Lua file directly from the editor, by hitting the Ctrl+\
+key combination. 
 
-This should result in a `picolua` executable. The Linux version expects
-to see a file at /tmp/picolua.blockdev whose size is at least 128kB.
-This will be used to model the persistent storage that the Pico
-version uses in flash. The Linux version is designed to model the
-Pico version closely, including all its limitations. Of course, 
-GPIO access and the like will not be available in this build.
+3. Start an interactive Lua session by running `lua` at the shell
+prompt. You can enter Lua code directly at the Lua prompt. From this
+prompt you can also invoke the editor, using `pico.edit "filename"`.
+
+4. Run `lua -e "lua code..."` at the shell prompt.
+
+5. If the Lua file is in a directory which is in the search path
+(see "Search path" below), then you can just type the name at the prompt,
+without the `.lua` extension. So you can run '/bin/blink.lua' just be
+entering `blink`. 
+
+6. Lua files can be grouped into modules, and executed using the
+`require()` function -- see "Lua modules" below.
 
 ## Notes about the Lua implementation ##
 
-`picolua` is based on Lua 3.5. 
+`picolua` is based on Lua 5.4, and this will probably not change, 
+given the number of changes that I had to make to it.
 
 On start-up, `picolua` enters interactive mode. You can enter expressions,
 which are evaluated and displayed, or run a program using `dofile` or
@@ -118,6 +132,21 @@ to abandon a line in the line editor. Ctrl+C is not used to exit the
 screen editor; in fact, it has no function there -- not even "copy".
 See the Screen editor section for more information.
 
+## The filesystem ##
+
+`picolua` maintains a filesystem in the PICO's flash memory. Filesystem
+storage starts a little after the program code, and extends, more-or-less
+to the end of the flash memory. 
+
+When you flash a `.uf2` file on the Pico, only the flash areas specified
+in the file are re-written. Consequently, and intentionally, 
+the `picolua` filesystem will survive re-flashing the program itself.
+
+The filesystem supports files and directories, with names up to
+255 characters. It has no notion of file permissions, ownership,
+timestamps, or links. This is to reduce the amount of storage used
+per file to a minimum. 
+
 ## Line editor ##
 
 The line editor responds to cursor movement and backspace (delete on
@@ -156,7 +185,95 @@ There are a few oddities that might be worth mentioning.
 
 - The editor auto-indents using spaces. At present, this behaviour can't be turned off
 
-## Pico-specific functions ##
+## Shell scripts ##
+
+`picolua` does not have well-developed shell script support, because it's
+unnecessary -- you can run shell commands, should there be a need to,
+from a Lua script.
+
+However, `picolua` does have a rudimentary notion of a shell script. A 
+script if a file containing shell commands, one to each line. The shell
+will process the script line by line to the end, or until some command
+raises an error.
+
+This facility is mostly intended for initialization.
+
+## Command-line arguments ##
+
+When you run a Lua program from the shell prompt, you can pass command-line
+arguments if necessary. This mechanism works in Lua the same in 
+regular Lua.
+
+So we can execute a LUa program like this:
+
+    $ lua bin/myprog.lua hello world
+
+or 
+
+    $ myprog hello world
+
+and in both cases the arguments "hello" and "world" are available in
+the Lua program as `arg[1]` and `arg[2]`. By convention, 
+`arg[0]` is the name of the program. 
+
+
+## Search path ##
+
+The `picolua` shell has a rudimentary knowledge of search path. At start-up,
+the path consists (only) of the directory `/bin`. Any Lua file placed
+in that directory, with a name ending in `.lua`, can be executed at the
+shell prompt simply by entering the name, without the extension. So 
+instead of entering `lua /bin/blink.lua`, we can enter `blink`. 
+
+The same principle applies to shell scripts. A shell script can be
+executed by entering only its name, if it is in the `/bin` directory,
+and has a name endring in `.sh`.
+
+## Lua modules ##
+
+`picolua` supports Lua modules, as ordinary Lua does. However, the module
+search path contains only the `/lib' directory. If a Lua program
+says `require "foo"`, Lua will search for `/lib/foo.lua` and 
+`/lib/foo/init.lua`. This allows simple modules to be placed directly
+in `lib`, and more complex ones in their own subdirectories of `\lib`.
+
+## Start-up scripts ##
+
+When `picolua` starts, it executes the shell script `/bin/shellrc.sh`.
+There really isn't anything useful that can be done in this file, except
+perhaps to run a Lua script.
+
+When Lua starts up, it executes `/bin/luarc.lua`, before entering
+interactive mode.
+
+In both cases, the shell script or Lua program need not ever finish.
+If this happens, then `picolua` will never enter interactive mode.
+This is exactly what would be require, to have `picolua` execute a 
+Lua program when the Pico powers up.
+
+It should still be possible to connect to a terminal, and hit
+Ctrl+C to regain control. If, for some reason, it isn't possible, then
+the only solution is to erase the Pico flash completely. Re-flashing
+`picolua` does not erase the rest of the flash -- this is intentional.
+
+
+## Running Lua from the editor ##
+
+You can run Lua code directly from within the screen editor, by hitting
+Ctrl+\. This works when running the editor from the shell prompt, and
+from within an interactive Lua session (e.g., using `pico.edit()`).
+In an interactive session, the Lua is executed in the global context,
+and any functions and variables defined continue to exist, until the
+end of the Lua session. If you run the editor from the shell prompt,
+the each invocation gets a separate Lua context, and any definitions
+are not persistent once the editor is closed.
+
+## Pico-specific Lua functions ##
+
+It's possible to run shell commands directly from Lua, using
+the Lua function `pico.execute()` (similar to the conventional
+`os.execute()`). However, there are some file management functions
+directly available as custom Lua functions. 
 
 *adc_pin_init (pin)*
 
@@ -181,13 +298,6 @@ state for analog input -- use `adc_pin_init()` for that.
 Read an analog value from the currently-selected channel. The value
 will be in the range 0..4095.
 
-*cp ("path1", "path2")*
-
-A crude file copier. `path1` refers to a file that exists; `path2`
-is a file that may or may not exist. If it does exist, it is overwritten
-without warning. This function cannot copy multiple files, or take
-a directory name as either argument. 
-
 *df*
 
 Returns an array containing the total, used, and free space in the
@@ -198,7 +308,7 @@ persistent storage, in bytes.
 Invokes a (very) simple text editor on the file. Please note that
 _this editor limits line length to 200 characters_.
 
-*format ()*
+*gpio_get ()*
 
 *gpio_get (pin)*
 
@@ -296,17 +406,6 @@ See the example `ll.lua` for an idea how to combine `pico.stat()` and
 Writes a string variable to the specified file. No terminating zero is
 written. An exception is raised if the file cannot be written.
 
-*yrecv() or yrecv ("filename")*
-
-Receives one or more files using the YModem protocol. See the
-section below on YModem support for more details.
-
-*ysend ("filename")*
-
-Send a file using the YModem protocol. See the
-section below on YModem support for more details.
-
-
 ## I2C support ##
 
 The Pico has two I2C ports, that can be assigned to various pairs of
@@ -391,11 +490,14 @@ buffered in memory first, so even 100kB might be too much.
 not much use for anything other than ASCII text. Ymodem has the additional
 advantage of allowing multiple files to be sent in one batch.
 
-To start a receive operation, use `yrecv()` or `yrecv "filename"`. If
+To start a receive operation, use the shell command `yrecv` or 
+`yrecv [filename]`. If
 a filename is specified, it will take precedence over the filename
 provided by the sender. However, it makes no sense to provide a filename
 if the sender will be sending multiple files -- they'll just overwrite
 one another. 
+
+To send, use `ysend {filename}`.
 
 When using YModem from a terminal emulator, it's probably best to
 start `yrecv` or `ysend` before starting the transfer in the terminal -- the
@@ -412,7 +514,142 @@ just invokes the command-line utilities `rb` and `rz` to do the
 actual transfer. YModem is notoriously fussy, and I can't be sure
 that any YModem utilities than these will work with `picolua`.
 
+## Shell commands ##
+
+The shell prompt is somewhat Linux-like. The line editor supports
+cursor movement and word-by-word movement using Ctrl+Arrow. It 
+remembers a limited amount of history. However, it's really only
+designed for basic file management, and running Lua code -- the
+built-in shell is not intended to be as power as a Linux shell.
+
+Note that there is, as yet, no concept of shell redirection, or
+even of a working directory: picolua supports directories, but
+all commands require full pathnames.
+
+There is no shell scripting support, but you can create scripts in
+Lua that invoke shell commands.
+
+*cat {files...}*
+
+Dumps the contents of the specified files to the console.
+
+*cp [-v] {files...} {file | directory}*
+
+Copy the specified files to the specified location. If the target
+is a directory, then the source files are copied into that directory,
+and given the same names. If there are multiple source files, the
+target must be a directory. If there are only two arguments, and 
+the second is not a directory, then the target is overwritten.
+
+if `-v` is specified, each filename is printed before it is
+copied. The command can't be used to copy complete directory
+trees.
+
+*df [-k]*
+
+Report the amount of free and used storage in byte, unless
+`-k` is specified, in which case it is in kB.
+
+*echo {arguments...}*
+
+Print the arguments to the terminal.
+
+*edit [filename]*
+
+Open the built-in editor. If no filename is given, start with an
+untitled file.
+
+*format [-y]*
+
+Format the filesystem. This deletes all data, and creates the
+initial '/bin`, `/etc', and 'lib/' directories, along with the
+"blink.lua" sample script. Unless the `-y` switch is given, this
+command prompts the user before reformatting the filesystem.
+
+*i2cdetect {pin1} {pin2}*
+
+Scan the I2C bus for devices. The Pico has two I2C buses, but they
+can be assigned to a number of different pin pairs. The utility
+works out the I2C bus from the specified pins. The pins are usually
+an adjacent pair, e.g., 16 and 17. One of these pins will be the
+data line and the other the clock, but it doesn't matter which order
+they are specified in one the command line. Of course, it might matter
+to whether the device actually works or not.
+
+*ls [-l] {paths...}*
+
+List the contents of the specified directories, or list the specified
+files. If `-l` is given, show the type and size of each entry.
+
+*mkdir {directories...}*
+
+Creates one or more directories. The parent directories must
+exist.
+
+*rm {paths...}*
+
+Delete the specified files or directories. Directories can only
+be deleted if they are empty.
+
+*mv {paths...} {file | directory}*
+
+Renames or moves files or directories. If there are multiple sources,
+the last argument must be a directory that already exists. 
+
+*yrecv [filename]*
+
+Receives one or more files using the YModem protocol. See the
+section on YModem support for more details.
+
+*ysend {filename}*
+
+Sends a single file using the YModem protocol. See the
+section on YModem support for more details.
+
+## Building ##
+
+`picolua` is implemented in C, and designed to be built using 
+the documented method for the Pico C SDK. The method depends, for better
+or worse, on CMake. Setting up CMake, the SDK, and the ARM compiler
+toolchain, is documented in the Raspberry Pi documentation. I'm not a fan
+of CMake, but building for the Pico is well-nigh impossible any other way.
+If you have set up according to the documentation, you should be able
+to build like this: 
+
+    $ mkdir build_pico
+    $ cd build_pico
+    $ cmake .. 
+    $ make
+
+The build process is configured to provide maximal warning logging,
+and will throw out thousands of messages, of varying degrees of scariness. 
+The result should be a file `picolua.uf2`, that can be copied to the
+Pico in bootloader mode.
+
+For testing purposes, it should be possible to build a version that 
+will work on a Linux workstation, like this:
+
+    $ mkdir build_host
+    $ cd build_host
+    $ PICO_PLATFORM=host cmake ..
+    $ make.
+
+This should result in a `picolua` executable. The Linux version expects
+to see a file at /tmp/picolua.blockdev whose size is at least 128kB.
+This will be used to model the persistent storage that the Pico
+version uses in flash. The Linux version is designed to model the
+Pico version closely, including all its faults and limitations. Of course, 
+GPIO access and the like will not be available in this build.
+
 ## Limitations and complications ##
+
+### Characters ###
+
+`picolua` is a thoroughgoing ASCII system. There is no support
+for wide or multibyte characters in any part of the implementation.
+Neither the screen editor nor the line editor can handle them, 
+even if the terminal can display them. Lua's support for such things
+is itself pretty rudimentary.
 
 ### Terminal ###
 
@@ -436,7 +673,7 @@ settings. All terminal emulators I'm aware of allow these settings to be adjuste
 
 If the terminal cannot be configured, it is possible to change most of these settings by editing `interface.h`.
 
-## Line editor ##
+### Line editor ###
 
 The line editor allows lines up to 200 character long, but it does not
 behave well once the line is longer than the terminal. This is because
@@ -450,7 +687,8 @@ available to Lua programs are those documented above, which read and write
 whole files. In particular, there is no `io.write`, even for the terminal. So
 there's no straightforward way to have a Lua program print a line of text
 _without_ a newline at the end. The workaround is to build the whole line in a
-string, and print that.
+string, and print that. However, Lua's string concatenation functions
+are not very memory-efficient, so this technique needs to be used with care.
 
 ### Limited Pico hardware support ###
 
@@ -458,7 +696,6 @@ string, and print that.
 input, I2C read and write, and hardware PWM. It runs on a single core, 
 leaving the other core idle. There is no support, and probably never 
 will be, for DMA, interrupts, threading, or multi-core operation.  
-
 
 ## Acknowledgements ##
 

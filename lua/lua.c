@@ -21,6 +21,7 @@
 
 #include <interface/interface.h> // KB
 #include <shell/shell.h> // KB
+#include <klib/term.h> // KB
 #include <libluapico/libluapico.h> // KB
 
 #if !defined(LUA_PROMPT)
@@ -76,14 +77,20 @@ extern lua_State *global_L; // KB
 // TODO
 #define lua_readline(L,b,p) \
         ((void)L, interface_write_string (p), /* show prompt */ \
-        shell_get_line (b, LUA_MAXINPUT))  /* get line */
+        my_read_line (b, LUA_MAXINPUT))  /* get line */
 #define lua_saveline(L,line)	{ (void)L; (void)line; }
 #define lua_freeline(L,b)	{ (void)L; (void)b; }
 
-static lua_State *globalL = NULL;
+static lua_State *globalL = NULL; // KB
+static uint8_t rl_interrupt = FALSE; // KB
+List *history = NULL;
 
 static const char *progname = LUA_PROGNAME;
 
+static int my_read_line (char *buff, int len)
+  {
+  return term_get_line (buff, len, &rl_interrupt, READLINE_MAX_HISTORY, history);
+  }
 
 /*
 ** Hook set by signal function to stop the interpreter.
@@ -107,7 +114,6 @@ static void laction (int i) {
 }
 
 
-#ifdef __REMOVED_KB
 static void print_usage (const char *badoption) {
   lua_writestringerror("%s: ", progname);
   if (badoption[1] == 'e' || badoption[1] == 'l')
@@ -127,7 +133,6 @@ static void print_usage (const char *badoption) {
   ,
   progname);
 }
-#endif
 
 /*
 ** Prints an error message, adding the program name in front of it
@@ -190,12 +195,10 @@ static int docall (lua_State *L, int narg, int nres) {
 }
 
 
-#ifdef __REMOVED_KB
 static void print_version (void) {
   lua_writestring(LUA_COPYRIGHT, strlen(LUA_COPYRIGHT));
   lua_writeline();
 }
-#endif
 
 /*
 ** Create the 'arg' table, which stores all arguments from the
@@ -205,7 +208,6 @@ static void print_version (void) {
 ** other arguments (before the script name) go to negative indices.
 ** If there is no script name, assume interpreter's name as base.
 */
-#ifdef __REMOVED_KB
 static void createargtable (lua_State *L, char **argv, int argc, int script) {
   int i, narg;
   if (script == argc) script = 0;  /* no script name? */
@@ -217,7 +219,6 @@ static void createargtable (lua_State *L, char **argv, int argc, int script) {
   }
   lua_setglobal(L, "arg");
 }
-#endif
 
 static int dochunk (lua_State *L, int status) {
   if (status == LUA_OK) status = docall(L, 0, 0);
@@ -239,7 +240,6 @@ static int dostring (lua_State *L, const char *s, const char *name) {
 ** Calls 'require(name)' and stores the result in a global variable
 ** with the given name.
 */
-#ifdef __REMOVED_KB
 static int dolibrary (lua_State *L, const char *name) {
   int status;
   lua_getglobal(L, "require");
@@ -249,7 +249,6 @@ static int dolibrary (lua_State *L, const char *name) {
     lua_setglobal(L, name);  /* global[name] = require return */
   return report(L, status);
 }
-#endif
 
 /*
 ** Returns the string to be used as a prompt by the interpreter.
@@ -410,7 +409,6 @@ static void doREPL (lua_State *L) {
 /*
 ** Push on the stack the contents of table 'arg' from 1 to #arg
 */
-#ifdef __REMOVED_KB
 static int pushargs (lua_State *L) {
   int i, n;
   if (lua_getglobal(L, "arg") != LUA_TTABLE)
@@ -422,9 +420,7 @@ static int pushargs (lua_State *L) {
   lua_remove(L, -i);  /* remove table from the stack */
   return n;
 }
-#endif
 
-#ifdef __REMOVED_KB
 static int handle_script (lua_State *L, char **argv) {
   int status;
   const char *fname = argv[0];
@@ -437,7 +433,6 @@ static int handle_script (lua_State *L, char **argv) {
   }
   return report(L, status);
 }
-#endif
 
 
 
@@ -454,7 +449,6 @@ static int handle_script (lua_State *L, char **argv) {
 ** any invalid argument). 'first' returns the first not-handled argument
 ** (either the script name or a bad argument in case of error).
 */
-#ifdef __REMOVED_KB
 static int collectargs (char **argv, int *first) {
   int args = 0;
   int i;
@@ -498,13 +492,11 @@ static int collectargs (char **argv, int *first) {
   *first = i;  /* no script name */
   return args;
 }
-#endif
 
 /*
 ** Processes options 'e' and 'l', which involve running Lua code.
 ** Returns 0 if some code raises an error.
 */
-#ifdef __REMOVED_KB
 static int runargs (lua_State *L, char **argv, int n) {
   int i;
   for (i = 1; i < n; i++) {
@@ -523,7 +515,6 @@ static int runargs (lua_State *L, char **argv, int n) {
   }
   return 1;
 }
-#endif
 
 
 static int handle_luainit (lua_State *L) {
@@ -547,14 +538,13 @@ static int handle_luainit (lua_State *L) {
 */
 static int pmain (lua_State *L) {
  
-  progname = "picolua";
-  luaL_openlibs (L);  /* open standard libraries */
-  handle_luainit (L);
-  doREPL(L);  /* do read-eval-print loop */
-  lua_pushboolean(L, 1);  /* signal no errors */
-  return 1;
+  //progname = "picolua";
+  //luaL_openlibs (L);  /* open standard libraries */
+  //handle_luainit (L);
+  //doREPL(L);  /* do read-eval-print loop */
+  //lua_pushboolean(L, 1);  /* signal no errors */
+  //return 1;
 
-#ifdef __REMOVED_KB
   int argc = (int)lua_tointeger(L, 1);
   char **argv = (char **)lua_touserdata(L, 2);
   int script;
@@ -593,7 +583,6 @@ static int pmain (lua_State *L) {
   }
   lua_pushboolean(L, 1);  /* signal no errors */
   return 1;
-#endif
 }
 
 
@@ -605,6 +594,7 @@ int lua_main (int argc, char **argv) { // KB
     return EXIT_FAILURE;
   }
 
+  history = list_create (free);
   global_L = L;
   luapico_init_constants (L); // KB
 
@@ -615,6 +605,8 @@ int lua_main (int argc, char **argv) { // KB
   result = lua_toboolean(L, -1);  /* get result */
   report(L, status);
   lua_close(L);
+  L = NULL;
+  list_destroy (history);
   return (result && status == LUA_OK) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 

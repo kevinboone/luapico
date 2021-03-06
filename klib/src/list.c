@@ -136,7 +136,7 @@ void list_append (List *self, void *item)
 /*==========================================================================
   list_length
 *==========================================================================*/
-int list_length (List *self)
+int list_length (const List *self)
   {
   LOG_IN
   ListItem *l = self->head;
@@ -155,7 +155,7 @@ int list_length (List *self)
 /*==========================================================================
   list_get
 *==========================================================================*/
-void *list_get (List *self, int index)
+void *list_get (const List *self, int index)
   {
   LOG_IN
   ListItem *l = self->head;
@@ -203,14 +203,6 @@ BOOL list_contains (List *self, const void *item, ListCompareFn fn)
   return found; 
   }
 
-
-/*==========================================================================
-list_contains_string
-*==========================================================================*/
-BOOL list_contains_string (List *self, const char *item)
-  {
-  return list_contains (self, item, (ListCompareFn)strcmp);
-  }
 
 
 /*==========================================================================
@@ -296,15 +288,6 @@ void list_remove (List *self, const void *item, ListCompareFn fn)
     }
   LOG_OUT
   }
-
-/*==========================================================================
-list_remove_string
-*==========================================================================*/
-void list_remove_string (List *self, const char *item)
-  {
-  list_remove (self, item, (ListCompareFn)strcmp);
-  }
-
 
 /*==========================================================================
 list_clone

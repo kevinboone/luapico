@@ -38,6 +38,7 @@ struct _String
   char *str;
   }; 
 
+StringTokGlobber string_tok_globber = NULL;
 
 /*==========================================================================
 string_create_empty 
@@ -492,6 +493,19 @@ List *string_split (const String *self, const char *delim)
 // Hash comment
 #define CHAR_HASH 4
 
+void string_tok_append (List *args, String *token, BOOL quoted)
+  {
+  if (quoted)
+    list_append (args, token);
+  else
+    {
+    if (string_tok_globber)
+      string_tok_globber (token, args);
+    else
+      list_append (args, token);
+    }
+  }
+
 List *string_tokenize (const String *s)
   {
   List *argv = list_create ((ListItemFreeFn)string_destroy);
@@ -595,7 +609,8 @@ List *string_tokenize (const String *s)
       case 1000 * STATE_GENERAL + CHAR_WHITE:
         //Hit ws while eating characters -- this is a token
         if (strlen (buff->str))
-          list_append (argv, buff);
+          //list_append (argv, buff);
+          string_tok_append (argv, buff, FALSE);
         buff = string_create_empty();
         state = STATE_WHITE;
         break;
@@ -613,7 +628,8 @@ List *string_tokenize (const String *s)
       case 1000 * STATE_GENERAL + CHAR_HASH:
         //Hit hash while eating characters -- this is a token
         if (strlen (buff->str))
-          list_append (argv, buff);
+          //list_append (argv, buff);
+          string_tok_append (argv, buff, FALSE);
         buff = string_create_empty();
         state = STATE_COMMENT;
         break;
@@ -632,7 +648,8 @@ List *string_tokenize (const String *s)
 
       case 1000 * STATE_DQUOTE + CHAR_DQUOTE:
         // Leave duote mode and store token (which might be empty) 
-        list_append (argv, buff);
+        string_tok_append (argv, buff, TRUE);
+        //list_append (argv, buff);
         buff = string_create_empty();
         state = STATE_DUNNO;
         break;
@@ -700,7 +717,8 @@ List *string_tokenize (const String *s)
   if (buff)
     {
     if (string_length (buff) > 0)
-      list_append (argv, buff);
+      string_tok_append (argv, buff, FALSE);
+     // list_append (argv, buff);
     else
       string_destroy (buff);
     }

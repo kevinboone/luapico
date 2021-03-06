@@ -1,9 +1,7 @@
 #pragma once
 
-#include <klib/defs.h>
-
+#include <stdint.h>
 typedef uint8_t ErrCode;
-
 
 // The following error codes match the LFS error codes in lfs.h, but negated
 #define ERR_NOENT           2   
@@ -25,5 +23,13 @@ typedef uint8_t ErrCode;
 #define ERR_BADARGS         100
 #define ERR_LINETOOLONG     101
 #define ERR_ABANDONED       102
+#define ERR_BADCOMMAND      103
+#define ERR_USAGE           104
+#define ERR_YMODEM          105
+#define ERR_INTERRUPTED     106
+#define ERR_NOTIMPLEMENTED  107
+#define ERR_BADPIN          108
+#define ERR_NOTEXECUTABLE   109
+
 
 

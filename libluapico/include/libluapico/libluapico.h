@@ -1,7 +1,7 @@
 /*=========================================================================
   picolua
 
-  shell/luapico.c
+  libluapico/libluapico.h
 
   (c)2021 Kevin Boone, GPLv3.0
 
@@ -16,11 +16,9 @@ extern int luapico_ls (lua_State *L);
 extern int luapico_edit (lua_State *L);
 extern int luapico_df (lua_State *L);
 extern int luapico_rm (lua_State *L);
-extern int luapico_format (lua_State *L);
 extern int luapico_read (lua_State *L); 
 extern int luapico_readline (lua_State *L);
 extern int luapico_write (lua_State *L);
-extern int luapico_cp (lua_State *L);
 extern int luapico_mkdir (lua_State *L);
 extern int luapico_stat (lua_State *L);
 extern int luapico_gpio_set_dir (lua_State *L);
@@ -36,8 +34,8 @@ extern int luapico_adc_select_input (lua_State *L);
 extern int luapico_adc_get (lua_State *L);
 extern int luapico_i2c_init (lua_State *L);
 extern int luapico_i2c_write_read (lua_State *L);
-extern int luapico_yrecv (lua_State *L);
 extern int luapico_ysend (lua_State *L);
+extern int luapico_execute (lua_State *L);
 
 /* Function exported to lua/loadlib.c, for initializing this library. */
 LUAMOD_API int luaopen_pico (lua_State *L);

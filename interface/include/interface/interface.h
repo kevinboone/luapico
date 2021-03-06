@@ -10,7 +10,7 @@
 #pragma once
 
 #include "pico.h"
-#include <errcodes.h>
+#include <shell/errcodes.h>
 #include <klib/defs.h>
 #include <storage/lfs.h>
 
@@ -80,6 +80,7 @@ extern void  interface_write_char (char c);
 extern void  interface_write_buff (const char *s, int len);
 extern void  interface_write_string (const char *s);
 extern void  interface_cleanup (void);
+extern void  interface_write_stringln (const char *str);
 
 // LittleFS interface functions
 extern BOOL interface_block_init ();
@@ -120,6 +121,7 @@ extern ErrCode interface_i2c_write_read (uint8_t port, uint8_t addr,
 extern void interface_pwm_pin_init (uint8_t pin);
 extern void interface_pwm_pin_set_level (uint8_t pin, uint16_t level);
 
+extern ErrCode interface_i2cdetect (uint8_t pin1, uint8_t pin2);
 
 END_DECLS
 

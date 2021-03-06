@@ -211,7 +211,7 @@
 
 #if !defined(LUA_PATH_DEFAULT)
 #define LUA_PATH_DEFAULT  \
-		"./?.lua;" "./?/init.lua"
+		"./?.lua;" "./?/init.lua;" "/lib/?.lua;" "/lib/?/init.lua"
 #endif
 
 #if !defined(LUA_CPATH_DEFAULT)

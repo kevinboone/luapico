@@ -7,7 +7,6 @@
 #define lauxlib_c
 #define LUA_LIB
 
-#include <errcodes.h>
 #include "lprefix.h"
 #include <errno.h>
 #include <stdarg.h>

@@ -2,7 +2,7 @@
 
   picolua
 
-  shell/luapico.c
+  libluapico/libluapico.c
 
   (c)2021 Kevin Boone, GPLv3.0
 
@@ -22,7 +22,6 @@
 #include <interface/interface.h>
 #include <klib/term.h> 
 #include <bute2/bute2.h>
-#include <ymodem/ymodem.h>
 #include "libluapico/libluapico.h"
 
 BOOL adc_initialized = FALSE;
@@ -58,7 +57,7 @@ int luapico_edit (lua_State *L)
 int luapico_df (lua_State *L) 
   {
   uint32_t used, total;
-  ErrCode err = storage_df (&used, &total);
+  ErrCode err = storage_df (NULL, &used, &total); // TODO
   if (err == 0) 
     {
     lua_newtable (L);
@@ -194,25 +193,6 @@ int luapico_write (lua_State *L)
 
 /*=========================================================================
 
-  luapico_format
-
-=========================================================================*/
-int luapico_format (lua_State *L) 
-  {
-  char in[10];
-  interface_write_string ("All data will be deleted. Proceed (y/n)? ");
-  shell_get_line (in, sizeof (in) - 1);
-  if (in[0] == 'y' || in[0] == 'Y')
-    {
-    ErrCode err = storage_format ();
-    if (err)
-      luaL_error (L, shell_strerror (err));
-    }
-  return 0; 
-  }
-
-/*=========================================================================
-
   luapico_mkdir
 
 =========================================================================*/
@@ -231,32 +211,6 @@ int luapico_mkdir (lua_State *L)
     {
     luaL_error (L, "Usage: mkdir (\"path\"");
     }
-  return 0; 
-  }
-
-/*=========================================================================
-
-  luapico_cp
-
-=========================================================================*/
-int luapico_cp (lua_State *L) 
-  {
-  int t = lua_gettop (L);
-
-  if (t == 2)
-    {
-    const char *from = luaL_checkstring (L, 1);
-    const char *to = luaL_checkstring (L, 2);
-    ErrCode err = storage_copy_file (from, to);
-    if (err == 0)
-      {
-      }
-    else
-      luaL_error (L, shell_strerror (err));
-    }
-  else
-    luaL_error (L, "Usage: pico.cp (\"file1\", \"file2\")");
-    
   return 0; 
   }
 
@@ -342,74 +296,6 @@ int luapico_stat (lua_State *L)
     }
 
   return 1;
-  }
-
-/*=========================================================================
-
-  luapico_ysend
-
-=========================================================================*/
-int luapico_ysend (lua_State *L) 
-  {
-  int t = lua_gettop (L);
-  if (t == 1)
-    {
-    const char *path = luaL_checkstring (L, 1);
-#ifdef PICO_ON_BOARD
-    stdio_set_translate_crlf (&stdio_usb, false);
-#endif
-    YmodemErr err = ymodem_send (path); 
-#ifdef PICO_ON_BOARD
-    stdio_set_translate_crlf (&stdio_usb, true);
-#endif
-    if (err != 0)
-      {
-      luaL_error (L, ymodem_strerror (err));
-      }
-    }
-  else
-    {
-    luaL_error (L, "Usage: ysend([\"file\"])");
-    }
-
-  return 0; // No return value
-  }
-
-/*=========================================================================
-
-  luapico_yrecv
-
-=========================================================================*/
-int luapico_yrecv (lua_State *L) 
-  {
-  int t = lua_gettop (L);
-  if (t == 0)
-    {
-    YmodemErr err = ymodem_receive (NULL, XMODEM_MAX); 
-    if (err != 0)
-      {
-      luaL_error (L, ymodem_strerror (err));
-      }
-    else
-      interface_write_endl();
-    }
-  else if (t == 1)
-    {
-    const char *path = luaL_checkstring (L, 1);
-    YmodemErr err = ymodem_receive (path, XMODEM_MAX); 
-    if (err != 0)
-      {
-      luaL_error (L, ymodem_strerror (err));
-      }
-    else
-      interface_write_endl();
-    }
-  else
-    {
-    luaL_error (L, "Usage: yrecv([\"file\"])");
-    }
-
-  return 0; // No return value
   }
 
 /*=========================================================================
@@ -668,6 +554,29 @@ int luapico_i2c_init (lua_State *L)
 
 /*=========================================================================
 
+  luapico_execute
+
+=========================================================================*/
+int luapico_execute (lua_State *L)
+  {
+  int t = lua_gettop (L);
+  if (t == 1)
+    {
+    const char *cmd = luaL_checkstring (L, 1);
+    ErrCode ret = shell_do_line (cmd);
+    lua_pushnumber (L, ret);
+    }
+  else
+    {
+    luaL_error (L, "Usage: execute(\"string\")");
+    }
+    
+  return 1;
+  }
+
+
+/*=========================================================================
+
   luapico_i2c_write_read
 
 =========================================================================*/
@@ -717,10 +626,8 @@ static const luaL_Reg picolib[] =
   {"edit", luapico_edit},
   {"df", luapico_df},
   {"rm", luapico_rm},
-  {"format", luapico_format},
   {"read", luapico_read},
   {"write", luapico_write},
-  {"cp", luapico_cp},
   {"mkdir", luapico_mkdir},
   {"stat", luapico_stat},
   {"gpio_set_dir", luapico_gpio_set_dir},
@@ -736,9 +643,8 @@ static const luaL_Reg picolib[] =
   {"adc_get", luapico_adc_get},
   {"i2c_init", luapico_i2c_init},
   {"i2c_write_read", luapico_i2c_write_read},
-  {"yrecv", luapico_yrecv},
-  {"ysend", luapico_ysend},
   {"readline", luapico_readline},
+  {"execute", luapico_execute},
   {NULL, NULL}
   };
 

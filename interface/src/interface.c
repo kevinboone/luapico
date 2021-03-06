@@ -13,6 +13,7 @@
 #include <klib/defs.h> 
 #include "interface/interface.h"
 #include "shell/shell.h"
+#include <libluapico/picoutils.h> 
 
 #if PICO_ON_DEVICE
 const uint LED_PIN = 25;
@@ -152,6 +153,19 @@ void interface_write_string (const char *s)
     s++;
     }
 #endif
+  }
+
+/*==========================================================================
+
+  interface_write_stringln
+
+  Helper function to tidy up writing strings with end-of-line
+
+==========================================================================*/
+void interface_write_stringln (const char *str) 
+  {
+  interface_write_string (str); 
+  interface_write_endl();
   }
 
 /*===========================================================================
@@ -568,6 +582,55 @@ ErrCode interface_i2c_write_read (uint8_t port, uint8_t addr,
     read[i] = 0;
   return 0;
 #endif
+  }
+
+/*===========================================================================
+
+  interface_i2cdetect
+
+===========================================================================*/
+extern ErrCode interface_i2cdetect (uint8_t pin1, uint8_t pin2)
+  {
+  ErrCode ret = 0;
+#if PICO_ON_DEVICE
+  i2c_inst_t *i2c = picoutils_get_i2c_from_pin (pin1);
+  if (i2c)
+    {
+    i2c_init(i2c, 100 * 1000);
+    gpio_set_function (pin1, GPIO_FUNC_I2C);
+    gpio_set_function (pin2, GPIO_FUNC_I2C);
+    gpio_pull_up (pin1);
+    gpio_pull_up (pin2);
+
+    BOOL got = FALSE;
+    for (uint8_t addr = 0; addr < 127; addr++)
+      {
+      if ((addr & 0x78) == 0 || (addr & 0x78) == 0x78) continue;
+
+      uint8_t rxdata;
+      int ret = i2c_read_blocking(i2c, addr, &rxdata, 1, false);
+      if (ret >= 0) 
+        {
+	char s[20];
+	sprintf (s, "0x%02X", addr);
+	interface_write_stringln (s);
+	got = TRUE;
+	}
+      }
+    if (!got)
+      interface_write_stringln ("None found");
+    }
+  else
+    {
+    shell_write_error (ERR_BADPIN);
+    ret = ERR_BADPIN;
+    }
+  
+#else
+  interface_write_stringln ("I2C bus scan not implemented");
+  ret = ERR_NOTIMPLEMENTED;
+#endif
+  return ret;
   }
 
 /*===========================================================================
