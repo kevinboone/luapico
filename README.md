@@ -3,6 +3,8 @@
 A programming environment for Lua for the Raspberry Pi Pico
 microcontroller.
 
+Version 0.3, April 2021
+
 ## What is this? ##
 
 `picolua` is a *proof-of-concept* Lua programming environment for the Pi
