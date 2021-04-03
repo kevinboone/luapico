@@ -349,7 +349,7 @@ void interface_gpio_put (uint8_t pin, uint8_t level)
 #if PICO_ON_DEVICE
   gpio_put (pin, level);
 #else
-  printf ("gpio_set_dir: pin=%d dir=%d\n", pin, level); 
+  printf ("gpio_put: pin=%d value=%d\n", pin, level); 
 #endif
   }
 
@@ -627,6 +627,7 @@ extern ErrCode interface_i2cdetect (uint8_t pin1, uint8_t pin2)
     }
   
 #else
+  (void)pin1; (void)pin2;
   interface_write_stringln ("I2C bus scan not implemented");
   ret = ERR_NOTIMPLEMENTED;
 #endif
