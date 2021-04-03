@@ -9,6 +9,7 @@ on:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
+  RELEASE_FILE: picolua-${{github.event.release.tag_name}}.uf2
 
 jobs:
   build:
@@ -66,5 +67,5 @@ jobs:
       with:
         asset_path: ${{runner.workspace}}/build_pico/picolua.uf2
         upload_url: ${{github.event.release.upload_url}}
-        asset_name: picolua.uf2
+        asset_name: ${{env.RELEASE_FILE}}
         asset_content_type: application/octet-stream
