@@ -422,6 +422,19 @@ void interface_sleep_ms (uint32_t val)
   usleep (val * 1000);
 #endif
   }
+/*===========================================================================
+
+  interface_time_ms
+
+===========================================================================*/
+uint32_t interface_time_ms ()
+  {
+#if PICO_ON_DEVICE
+  return to_ms_since_boot(get_absolute_time());
+#else
+  usleep (val * 1000);
+#endif
+  }
 
 /*===========================================================================
 

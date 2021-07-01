@@ -519,6 +519,7 @@ static const luaL_Reg base_funcs[] = {
   {"gpio_put", luapico_gpio_put},
   {"gpio_pull_up", luapico_gpio_pull_up},
   {"sleep_ms", luapico_sleep_ms},
+  {"time_ms", luapico_time_ms},
   {"pwm_pin_init", luapico_pwm_pin_init},
   {"pwm_pin_set_level", luapico_pwm_pin_set_level},
   {"adc_pin_init", luapico_adc_pin_init},

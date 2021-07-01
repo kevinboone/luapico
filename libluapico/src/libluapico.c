@@ -464,6 +464,20 @@ int luapico_sleep_ms (lua_State *L)
   return 0;
   }
 
+
+/*=========================================================================
+
+  luapico_time_ms
+
+=========================================================================*/
+int luapico_time_ms (lua_State *L)
+  {
+    uint32_t val = interface_time_ms();
+    lua_pushnumber (L, val);
+    return 1;
+  }
+
+
 /*=========================================================================
 
   luapico_pwm_pin_init

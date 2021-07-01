@@ -112,6 +112,7 @@ extern void interface_gpio_set_function (uint8_t pin, uint8_t function);
 extern void interface_gpio_pull_up (uint8_t pin);
 
 extern void interface_sleep_ms (uint32_t val);
+extern uint32_t interface_time_ms ();
 
 extern void interface_i2c_init (uint8_t port, uint32_t baud);
 extern ErrCode interface_i2c_write_read (uint8_t port, uint8_t addr, 
