@@ -321,6 +321,26 @@ int luapico_gpio_set_dir (lua_State *L)
 
 /*=========================================================================
 
+  luapico_gpio_set_dir_all_bits
+
+=========================================================================*/
+int luapico_gpio_set_dir_all_bits (lua_State *L)
+  {
+  int t = lua_gettop (L);
+
+  if (t == 1)
+    {
+    uint32_t values = (uint32_t)luaL_checknumber (L, 1);
+    interface_gpio_set_dir_all_bits (values);
+    }
+  else
+    luaL_error (L, "Usage: pico.gpio_set_dir_all_bits (pins)");
+    
+  return 0; 
+  }
+
+/*=========================================================================
+
   luapico_gpio_set_function
 
 =========================================================================*/

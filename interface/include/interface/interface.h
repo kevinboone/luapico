@@ -107,6 +107,7 @@ extern uint16_t interface_adc_get (void);
 extern uint8_t interface_gpio_get (uint8_t pin);
 extern void interface_gpio_put (uint8_t pin, uint8_t level);
 extern void interface_gpio_set_dir (uint8_t pin, uint8_t dir);
+extern void interface_gpio_set_dir_all_bits(uint32_t values);
 extern void interface_gpio_set_function (uint8_t pin, uint8_t function);
 extern void interface_gpio_pull_up (uint8_t pin);
 

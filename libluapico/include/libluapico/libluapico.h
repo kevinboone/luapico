@@ -22,6 +22,7 @@ extern int luapico_write (lua_State *L);
 extern int luapico_mkdir (lua_State *L);
 extern int luapico_stat (lua_State *L);
 extern int luapico_gpio_set_dir (lua_State *L);
+extern int luapico_gpio_set_dir_all_bits (lua_State *L);
 extern int luapico_gpio_put (lua_State *L);
 extern int luapico_gpio_pull_up (lua_State *L);
 extern int luapico_gpio_get (lua_State *L);

@@ -513,6 +513,7 @@ static const luaL_Reg base_funcs[] = {
   {"write", luapico_write},
   {"stat", luapico_stat},
   {"gpio_set_dir", luapico_gpio_set_dir},
+  {"gpio_set_dir_all_bits", luapico_gpio_set_dir_all_bits},
   {"gpio_set_function", luapico_gpio_set_function},
   {"gpio_get", luapico_gpio_get},
   {"gpio_put", luapico_gpio_put},

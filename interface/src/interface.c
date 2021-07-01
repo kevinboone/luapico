@@ -398,6 +398,19 @@ void interface_gpio_set_dir (uint8_t pin, uint8_t dir)
 
 /*===========================================================================
 
+  interface_gpio_set_dir_all_bits
+
+===========================================================================*/
+void interface_gpio_set_dir_all_bits(uint32_t values)
+  {
+#if PICO_ON_DEVICE
+  gpio_set_dir_all_bits(values);
+#else
+  printf ("gpio_set_dir_all_bits: values=%ld\n", values); 
+#endif
+  }
+/*===========================================================================
+
   interface_sleep_ms
 
 ===========================================================================*/
