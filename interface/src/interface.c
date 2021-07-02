@@ -398,6 +398,19 @@ void interface_gpio_set_dir (uint8_t pin, uint8_t dir)
 
 /*===========================================================================
 
+  interface_gpio_set_dir_all_bits
+
+===========================================================================*/
+void interface_gpio_set_dir_all_bits(uint32_t values)
+  {
+#if PICO_ON_DEVICE
+  gpio_set_dir_all_bits(values);
+#else
+  printf ("gpio_set_dir_all_bits: values=%ld\n", values); 
+#endif
+  }
+/*===========================================================================
+
   interface_sleep_ms
 
 ===========================================================================*/
@@ -405,6 +418,19 @@ void interface_sleep_ms (uint32_t val)
   {
 #if PICO_ON_DEVICE
   sleep_ms (val); 
+#else
+  usleep (val * 1000);
+#endif
+  }
+/*===========================================================================
+
+  interface_time_ms
+
+===========================================================================*/
+uint32_t interface_time_ms ()
+  {
+#if PICO_ON_DEVICE
+  return to_ms_since_boot(get_absolute_time());
 #else
   usleep (val * 1000);
 #endif
