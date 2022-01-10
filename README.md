@@ -62,7 +62,7 @@ There are various ways to run Lua in `picolua`.
 a terminal using the YModem protocol (described below). Then run it
 using the shell command `lua {filename}`.
 
-2. Run the Lua file directly from the editor, by hitting the Ctrl+\
+2. Run the Lua file directly from the editor, by hitting the Ctrl+\\
 key combination. 
 
 3. Start an interactive Lua session by running `lua` at the shell
