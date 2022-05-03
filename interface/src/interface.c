@@ -427,7 +427,7 @@ void interface_sleep_ms (uint32_t val)
   interface_time_ms
 
 ===========================================================================*/
-uint32_t interface_time_ms ()
+uint32_t interface_time_ms (uint32_t val)
   {
 #if PICO_ON_DEVICE
   return to_ms_since_boot(get_absolute_time());
